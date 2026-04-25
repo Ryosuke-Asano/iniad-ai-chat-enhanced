@@ -1,7 +1,11 @@
-const { FusesPlugin } = require('@electron-forge/plugin-fuses');
-const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+import { FusesPlugin } from '@electron-forge/plugin-fuses';
+import { FuseV1Options, FuseVersion } from '@electron/fuses';
+import fs from 'node:fs';
+import path from 'node:path';
 
-module.exports = {
+import type { ForgeConfig } from '@electron-forge/shared-types';
+
+const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
   },
@@ -24,6 +28,20 @@ module.exports = {
       config: {},
     },
   ],
+  hooks: {
+    packageAfterCopy: async (_forgeConfig, buildPath) => {
+      // Copy static assets (HTML, CSS) to the dist output
+      const srcDir = path.resolve(__dirname, 'src');
+      const distDir = path.join(buildPath, 'dist');
+      const files = ['index.html', 'index.css'];
+      for (const file of files) {
+        const src = path.join(srcDir, file);
+        if (fs.existsSync(src)) {
+          fs.copyFileSync(src, path.join(distDir, file));
+        }
+      }
+    },
+  },
   plugins: [
     {
       name: '@electron-forge/plugin-auto-unpack-natives',
@@ -42,3 +60,5 @@ module.exports = {
     }),
   ],
 };
+
+export default config;
