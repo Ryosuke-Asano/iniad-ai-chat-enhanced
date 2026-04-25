@@ -1,17 +1,17 @@
-const path = require('node:path');
-const rules = require('./webpack.rules');
+const path = require("node:path");
+const rules = require("./webpack.rules");
 
 module.exports = {
-  entry: './src/preload.ts',
-  target: 'electron-preload',
-  mode: 'development',
-  devtool: 'source-map',
+  entry: "./src/preload.ts",
+  target: "web",
+  mode: "development",
+  devtool: "source-map",
   module: { rules },
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: [".ts", ".js"],
   },
   output: {
-    path: path.resolve(__dirname, '.webpack/preload'),
-    filename: 'preload.js',
+    path: path.resolve(__dirname, ".webpack/preload"),
+    filename: "preload.js",
   },
 };

@@ -5,7 +5,6 @@ import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
 const mainConfig = require("./webpack.main.config");
-const preloadConfig = require("./webpack.preload.config");
 const rendererConfig = require("./webpack.renderer.config");
 
 const config: ForgeConfig = {
@@ -43,7 +42,6 @@ const config: ForgeConfig = {
     }),
     new WebpackPlugin({
       mainConfig,
-      preload: { config: preloadConfig },
       renderer: {
         config: rendererConfig,
         entryPoints: [
@@ -51,6 +49,7 @@ const config: ForgeConfig = {
             name: "main_window",
             html: "./src/index.html",
             js: "./src/renderer/renderer.tsx",
+            preload: { js: "./src/preload.ts" },
           },
         ],
       },
