@@ -3,14 +3,13 @@
   "productName": "iniad-ai-chat-enhanced",
   "version": "1.0.0",
   "description": "My Electron application description",
-  "main": "dist/index.js",
+  "main": ".webpack/main/index.js",
   "private": true,
   "scripts": {
-    "build": "tsc && node -e \"const fs=require('fs');fs.copyFileSync('src/index.html','dist/index.html');fs.copyFileSync('src/index.css','dist/index.css')\"",
-    "start": "tsc && electron-forge start",
-    "package": "tsc && electron-forge package",
-    "make": "tsc && electron-forge make",
-    "publish": "tsc && electron-forge publish",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
   },
   "keywords": [],
@@ -20,7 +19,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1"
+    "electron-squirrel-startup": "^1.0.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",
@@ -30,8 +31,14 @@
     "@electron-forge/maker-zip": "^7.11.1",
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
     "@electron-forge/plugin-fuses": "^7.11.1",
+    "@electron-forge/plugin-webpack": "^7.11.1",
     "@electron/fuses": "^1.8.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "css-loader": "^7.1.4",
     "electron": "41.3.0",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.7",
     "typescript": "^6.0.3"
   }
 }

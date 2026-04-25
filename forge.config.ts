@@ -1,9 +1,12 @@
-import { FusesPlugin } from '@electron-forge/plugin-fuses';
-import { FuseV1Options, FuseVersion } from '@electron/fuses';
-import fs from 'node:fs';
-import path from 'node:path';
+import { FusesPlugin } from "@electron-forge/plugin-fuses";
+import { FuseV1Options, FuseVersion } from "@electron/fuses";
+import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 
-import type { ForgeConfig } from '@electron-forge/shared-types';
+import type { ForgeConfig } from "@electron-forge/shared-types";
+
+const mainConfig = require("./webpack.main.config");
+const preloadConfig = require("./webpack.preload.config");
+const rendererConfig = require("./webpack.renderer.config");
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -12,43 +15,23 @@ const config: ForgeConfig = {
   rebuildConfig: {},
   makers: [
     {
-      name: '@electron-forge/maker-squirrel',
+      name: "@electron-forge/maker-squirrel",
       config: {},
     },
     {
-      name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
+      name: "@electron-forge/maker-zip",
+      platforms: ["darwin"],
     },
     {
-      name: '@electron-forge/maker-deb',
+      name: "@electron-forge/maker-deb",
       config: {},
     },
     {
-      name: '@electron-forge/maker-rpm',
+      name: "@electron-forge/maker-rpm",
       config: {},
     },
   ],
-  hooks: {
-    packageAfterCopy: async (_forgeConfig, buildPath) => {
-      // Copy static assets (HTML, CSS) to the dist output
-      const srcDir = path.resolve(__dirname, 'src');
-      const distDir = path.join(buildPath, 'dist');
-      const files = ['index.html', 'index.css'];
-      for (const file of files) {
-        const src = path.join(srcDir, file);
-        if (fs.existsSync(src)) {
-          fs.copyFileSync(src, path.join(distDir, file));
-        }
-      }
-    },
-  },
   plugins: [
-    {
-      name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
-    },
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
@@ -57,6 +40,20 @@ const config: ForgeConfig = {
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
+    }),
+    new WebpackPlugin({
+      mainConfig,
+      preload: { config: preloadConfig },
+      renderer: {
+        config: rendererConfig,
+        entryPoints: [
+          {
+            name: "main_window",
+            html: "./src/index.html",
+            js: "./src/renderer/renderer.tsx",
+          },
+        ],
+      },
     }),
   ],
 };
