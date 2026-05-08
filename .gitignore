@@ -93,3 +93,6 @@ out/
 
 # TypeScript compiled output
 dist/
+
+# Auto-generated reviewer artifacts
+coderabbit_comment.md

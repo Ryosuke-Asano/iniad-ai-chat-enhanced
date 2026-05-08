@@ -5,6 +5,8 @@
 
 /** 会話の1ターン（ユーザーまたはAIの発言） */
 export interface ChatTurn {
+  /** 一意なメッセージID */
+  id: string;
   /** "user" | "assistant" */
   role: "user" | "assistant";
   /** メッセージ本文 */
