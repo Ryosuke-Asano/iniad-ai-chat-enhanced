@@ -46,6 +46,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="質問を入力... (Enterで送信, Shift+Enterで改行)"
+          aria-label="Chat message input"
           disabled={disabled}
           rows={1}
         />
