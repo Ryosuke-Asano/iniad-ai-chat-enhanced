@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChatView } from "./components/ChatView";
 import { ChatInput } from "./components/ChatInput";
 import { StatusBar } from "./components/StatusBar";
@@ -32,6 +32,13 @@ const MOCK_MESSAGES: ChatTurn[] = [
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatTurn[]>(MOCK_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const handleSend = (text: string) => {
     // ユーザーのメッセージを追加
@@ -44,7 +51,7 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     // AIの返答をシミュレート（1秒後）
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       const newAiMsg: ChatTurn = {
         role: "assistant",
         content: `「${text}」ですね。モック画面なのでダミーの回答を返しています。本番ではここにAPIからの回答が入ります。`,

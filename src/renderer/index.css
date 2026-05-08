@@ -96,48 +96,77 @@ body {
 
 .message-bubble-wrapper {
   display: flex;
-  flex-direction: column;
-  max-width: 85%;
-  animation: fadeInSlideUp 0.3s ease-out forwards;
-}
-
-.message-bubble-wrapper.user {
-  align-self: flex-end;
-  align-items: flex-end;
+  flex-direction: row;
+  width: 100%;
+  animation: fadeInSlideUp 0.2s ease-out forwards;
+  align-items: flex-start;
+  padding: 1rem 1.5rem;
+  border-radius: 0;
+  gap: 1rem;
 }
 
 .message-bubble-wrapper.assistant {
-  align-self: flex-start;
-  align-items: flex-start;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.message-bubble-wrapper:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.message-avatar {
+  font-size: 1.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.message-bubble-wrapper.user .message-avatar {
+  background-color: #313244;
+}
+
+.message-bubble-wrapper.assistant .message-avatar {
+  background-color: #45475a;
+}
+
+.message-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .message-sender-name {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 0.95rem;
   margin-bottom: 0.25rem;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.message-bubble-wrapper.user .message-sender-name {
+  color: var(--primary);
+}
+
+.message-bubble-wrapper.assistant .message-sender-name {
+  color: #a6e3a1; /* Distinct color for AI */
 }
 
 .message-bubble {
-  padding: 1rem;
-  border-radius: 8px;
+  padding: 0;
+  border-radius: 0;
   line-height: 1.5;
   word-wrap: break-word;
-}
-
-.message-bubble.user {
-  background-color: var(--user-bubble);
-  border-bottom-right-radius: 0;
-}
-
-.message-bubble.assistant {
-  background-color: var(--ai-bubble);
-  border-bottom-left-radius: 0;
+  background-color: transparent;
+  width: 100%;
 }
 
 .message-content {
   margin: 0;
   white-space: pre-wrap;
+  color: var(--text-main);
 }
 
 /* Citations */
@@ -249,6 +278,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.status-divider {
+  color: var(--border-color);
+  margin: 0 0.5rem;
 }
 
 .status-indicator {

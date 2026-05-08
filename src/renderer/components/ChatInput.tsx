@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import "../index.css";
+
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -17,8 +17,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
     }
   }, [text]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.SyntheticEvent) => {
+    e?.preventDefault();
     if (text.trim() && !disabled) {
       onSend(text.trim());
       setText("");
