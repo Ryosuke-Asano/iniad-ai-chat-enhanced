@@ -23,7 +23,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages }) => {
         </div>
       ) : (
         messages.map((msg) => (
-          <MessageBubble key={msg.timestamp} turn={msg} />
+          <MessageBubble key={msg.id} turn={msg} />
         ))
       )}
       <div ref={bottomRef} />

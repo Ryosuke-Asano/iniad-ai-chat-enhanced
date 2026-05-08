@@ -8,11 +8,13 @@ import "./index.css";
 // ダミーデータ（モック）
 const MOCK_MESSAGES: ChatTurn[] = [
   {
+    id: crypto.randomUUID(),
     role: "user",
     content: "Pythonのリスト内包表記について教えてください",
     timestamp: new Date().toISOString(),
   },
   {
+    id: crypto.randomUUID(),
     role: "assistant",
     content: "リスト内包表記は、既存のリストなどから新しいリストを簡潔に生成するための構文です。\n例えば `[x*2 for x in range(5)]` のように記述します。",
     citations: [
@@ -32,7 +34,8 @@ const MOCK_MESSAGES: ChatTurn[] = [
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatTurn[]>(MOCK_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [mcpConnectionStatus, setMcpConnectionStatus] = useState<"connected" | "disconnected" | "connecting">("connected");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -43,6 +46,7 @@ const App: React.FC = () => {
   const handleSend = (text: string) => {
     // ユーザーのメッセージを追加
     const newUserMsg: ChatTurn = {
+      id: crypto.randomUUID(),
       role: "user",
       content: text,
       timestamp: new Date().toISOString(),
@@ -53,6 +57,7 @@ const App: React.FC = () => {
     // AIの返答をシミュレート（1秒後）
     timeoutRef.current = setTimeout(() => {
       const newAiMsg: ChatTurn = {
+        id: crypto.randomUUID(),
         role: "assistant",
         content: `「${text}」ですね。モック画面なのでダミーの回答を返しています。本番ではここにAPIからの回答が入ります。`,
         timestamp: new Date().toISOString(),
@@ -75,7 +80,7 @@ const App: React.FC = () => {
 
       <ChatInput onSend={handleSend} disabled={isLoading} />
       
-      <StatusBar mcpStatus="connected" model="GPT-5.4-nano (Mock)" />
+      <StatusBar mcpStatus={mcpConnectionStatus} model="GPT-5.4-nano (Mock)" />
     </div>
   );
 };

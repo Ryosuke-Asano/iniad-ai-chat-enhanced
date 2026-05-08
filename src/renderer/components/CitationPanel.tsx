@@ -11,6 +11,15 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ citations }) => {
     return null;
   }
 
+  const isSafeUrl = (urlStr: string) => {
+    try {
+      const parsed = new URL(urlStr);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <div className="citations-container">
       <div className="citations-header">📄 参照元:</div>
@@ -18,9 +27,15 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ citations }) => {
         {citations.map((citation) => (
           <li key={citation.url} className="citation-item">
             <span className="citation-title">• {citation.title}</span>
-            <a href={citation.url} target="_blank" rel="noopener noreferrer" className="citation-url">
-              {citation.url}
-            </a>
+            {isSafeUrl(citation.url) ? (
+              <a href={citation.url} target="_blank" rel="noopener noreferrer" className="citation-url">
+                {citation.url}
+              </a>
+            ) : (
+              <span className="citation-url" style={{ color: "var(--text-muted)", cursor: "not-allowed", pointerEvents: "none" }}>
+                {citation.url}
+              </span>
+            )}
           </li>
         ))}
       </ul>
