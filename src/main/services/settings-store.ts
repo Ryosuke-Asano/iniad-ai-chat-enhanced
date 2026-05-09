@@ -87,11 +87,19 @@ export class SettingsStore {
 
     const updated = { ...this.cache };
 
-    // 空文字列でないフィールドのみを更新
+    // 既知のキーのみを許可（未知のキーやプロトタイプ汚染対策）
+    const knownKeys = ["apiKey", "baseURL", "model", "moocsUsername", "moocsPassword"] as const;
+
     for (const [key, value] of Object.entries(partialSettings)) {
-      if (value !== "") {
+      // バリデーション: 既知のキー && 文字列型 && 空文字でない
+      if (
+        knownKeys.includes(key as any) &&
+        typeof value === "string" &&
+        value !== ""
+      ) {
         (updated as Record<string, string>)[key] = value;
       }
+      // undefined/null や未知のキーは無音でスキップ
     }
 
     this.cache = updated;
