@@ -29,13 +29,11 @@ const SETTINGS_FILE = "settings.json";
  * ```
  */
 export class SettingsStore {
-  private settingsPath: string;
+  private settingsPath: string = "";
   private cache: AppSettings | null = null;
 
   constructor() {
-    // Electron app が初期化されている必要がある
-    const userDataPath = app.getPath("userData");
-    this.settingsPath = join(userDataPath, SETTINGS_FILE);
+    // コンストラクタでは何もしない（app.getPath()はapp.whenReady()後に呼ぶ必要がある）
   }
 
   /**
@@ -43,6 +41,10 @@ export class SettingsStore {
    * 設定ファイルが存在しない場合はデフォルト値を作成する
    */
   async init(): Promise<void> {
+    // Electron app が初期化された後にパスを解決する
+    const userDataPath = app.getPath("userData");
+    this.settingsPath = join(userDataPath, SETTINGS_FILE);
+
     try {
       await this.ensureSettingsFile();
       this.cache = await this.loadFromFile();
