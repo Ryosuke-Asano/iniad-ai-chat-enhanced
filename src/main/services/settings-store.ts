@@ -50,9 +50,10 @@ export class SettingsStore {
       await this.ensureSettingsFile();
       this.cache = await this.loadFromFile();
     } catch (error) {
-      // 読み込み失敗時はデフォルト値を使用
-      console.error("Failed to load settings, using defaults:", error);
+      // 読み込み失敗時はデフォルト値を使用し、破損したファイルを修復する
+      console.error("Failed to load settings, using defaults and healing file:", error);
       this.cache = { ...DEFAULT_SETTINGS };
+      await this.saveToFile(this.cache);
     }
   }
 
