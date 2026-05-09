@@ -31,6 +31,7 @@ const SETTINGS_FILE = "settings.json";
 export class SettingsStore {
   private settingsPath: string = "";
   private cache: AppSettings | null = null;
+  private updateQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     // コンストラクタでは何もしない（app.getPath()はapp.whenReady()後に呼ぶ必要がある）
@@ -85,25 +86,30 @@ export class SettingsStore {
       throw new Error("SettingsStore not initialized. Call init() first.");
     }
 
-    const updated = { ...this.cache };
+    // 前の更新が完了するまで待つことで、レースコンディションを防止
+    this.updateQueue = this.updateQueue.then(async () => {
+      const updated = { ...this.cache! };
 
-    // 既知のキーのみを許可（未知のキーやプロトタイプ汚染対策）
-    const knownKeys = ["apiKey", "baseURL", "model", "moocsUsername", "moocsPassword"] as const;
+      // 既知のキーのみを許可（未知のキーやプロトタイプ汚染対策）
+      const knownKeys = ["apiKey", "baseURL", "model", "moocsUsername", "moocsPassword"] as const;
 
-    for (const [key, value] of Object.entries(partialSettings)) {
-      // バリデーション: 既知のキー && 文字列型 && 空文字でない
-      if (
-        knownKeys.includes(key as any) &&
-        typeof value === "string" &&
-        value !== ""
-      ) {
-        (updated as Record<string, string>)[key] = value;
+      for (const [key, value] of Object.entries(partialSettings)) {
+        // バリデーション: 既知のキー && 文字列型 && 空文字でない
+        if (
+          knownKeys.includes(key as any) &&
+          typeof value === "string" &&
+          value !== ""
+        ) {
+          (updated as Record<string, string>)[key] = value;
+        }
+        // undefined/null や未知のキーは無音でスキップ
       }
-      // undefined/null や未知のキーは無音でスキップ
-    }
 
-    this.cache = updated;
-    await this.saveToFile(updated);
+      this.cache = updated;
+      await this.saveToFile(updated);
+    });
+
+    await this.updateQueue;
   }
 
   /**
