@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { AppSettings } from "../../shared/types";
 import { DEFAULT_SETTINGS } from "../../shared/types";
 
@@ -56,6 +56,45 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [apiTestResult, setApiTestResult] = useState<TestResult>({ status: "idle" });
   const [mcpTestResult, setMcpTestResult] = useState<TestResult>({ status: "idle" });
+
+  // ── 最後の文字を一瞬見せるマスキング ──
+  const [revealIndex, setRevealIndex] = useState<{ field: string; index: number } | null>(null);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    };
+  }, []);
+
+  /** 秘密フィールドの表示値を生成（最後の1文字だけ一瞬見せる） */
+  const getMaskedValue = (field: string, raw: string, forceShow: boolean): string => {
+    if (!raw) return "";
+    if (forceShow) return raw;
+    return raw.split("").map((ch, i) => {
+      if (revealIndex && revealIndex.field === field && revealIndex.index === i) {
+        return ch; // 最後に打った文字を一瞬表示
+      }
+      return "●";
+    }).join("");
+  };
+
+  /** 秘密フィールドの更新（最後の文字を一瞬見せてからマスク） */
+  const updateSecretField = (field: keyof AppSettings, newValue: string) => {
+    const oldValue = settings[field];
+    updateField(field, newValue);
+
+    // 文字が追加された場合のみ、最後の文字を一瞬見せる
+    if (newValue.length > oldValue.length) {
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      setRevealIndex({ field, index: newValue.length - 1 });
+      revealTimerRef.current = setTimeout(() => {
+        setRevealIndex(null);
+      }, 600);
+    } else {
+      setRevealIndex(null);
+    }
+  };
 
   // ── 初期読み込み ──
   useEffect(() => {
@@ -258,10 +297,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-apiKey"
-                type={showApiKey ? "text" : "password"}
-                className={`settings-input ${errors.apiKey ? "error" : ""}`}
-                value={settings.apiKey}
-                onChange={(e) => updateField("apiKey", e.target.value)}
+                type="text"
+                className={`settings-input settings-secret-input ${errors.apiKey ? "error" : ""}`}
+                value={getMaskedValue("apiKey", settings.apiKey, showApiKey)}
+                onChange={(e) => {
+                  const raw = settings.apiKey;
+                  const newVal = e.target.value;
+                  if (newVal.length > raw.length) {
+                    const added = newVal.slice(raw.length);
+                    updateSecretField("apiKey", raw + added);
+                  } else if (newVal.length < raw.length) {
+                    const diff = raw.length - newVal.length;
+                    updateSecretField("apiKey", raw.slice(0, raw.length - diff));
+                  }
+                }}
                 placeholder="sk-..."
                 autoComplete="off"
               />
@@ -367,10 +416,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-moocsPassword"
-                type={showMoocsPassword ? "text" : "password"}
-                className={`settings-input ${errors.moocsPassword ? "error" : ""}`}
-                value={settings.moocsPassword}
-                onChange={(e) => updateField("moocsPassword", e.target.value)}
+                type="text"
+                className={`settings-input settings-secret-input ${errors.moocsPassword ? "error" : ""}`}
+                value={getMaskedValue("moocsPassword", settings.moocsPassword, showMoocsPassword)}
+                onChange={(e) => {
+                  const raw = settings.moocsPassword;
+                  const newVal = e.target.value;
+                  if (newVal.length > raw.length) {
+                    const added = newVal.slice(raw.length);
+                    updateSecretField("moocsPassword", raw + added);
+                  } else if (newVal.length < raw.length) {
+                    const diff = raw.length - newVal.length;
+                    updateSecretField("moocsPassword", raw.slice(0, raw.length - diff));
+                  }
+                }}
                 placeholder="パスワード"
                 autoComplete="off"
               />

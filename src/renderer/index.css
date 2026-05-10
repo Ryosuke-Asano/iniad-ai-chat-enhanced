@@ -462,6 +462,12 @@ body {
   color: var(--text-main);
 }
 
+/* Secret input (custom masking with last-char reveal) */
+.settings-secret-input {
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  letter-spacing: 0.1em;
+}
+
 /* Input group (input + toggle button) */
 .settings-input-group {
   display: flex;
