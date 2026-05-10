@@ -129,8 +129,8 @@ try {
 
   // List tools - iniad-moocs-mcp (v0.0.4) was built with an older SDK
   // whose tool inputSchema doesn't pass the newer SDK v1.29.0's strict
-  // validation. We work around this by making a direct JSON-RPC request
-  // and parsing the response ourselves.
+  // validation. We use the public client.request() API with a relaxed
+  // schema (z.any()) to bypass the strict validation.
   let toolNames = [];
   try {
     // First try the standard listTools()
@@ -138,59 +138,17 @@ try {
     toolNames = toolsResult.tools.map(t => t.name);
     log('Tools', `Discovered ${toolNames.length} tools`, 'pass');
   } catch (listErr) {
-    // Fallback: manually send tools/list via the underlying transport
-    log('Tools', `listTools() compat issue (expected), using direct send...`, 'info');
-    const messageId = Date.now();
-    const request = JSON.stringify({
-      jsonrpc: '2.0',
-      id: messageId,
-      method: 'tools/list',
-      params: {}
-    });
-    
-    // Use notification handler approach - listen for the response on stdout
-    const result = await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Timeout waiting for tools/list')), 10000);
-      
-      // Access the transport's stdin/stdout directly
-      const stdin = transport._process?.stdin;
-      const stdout = transport._process?.stdout;
-      
-      if (!stdin || !stdout) {
-        clearTimeout(timeout);
-        reject(new Error('Cannot access transport process stdio'));
-        return;
-      }
-      
-      let buffer = '';
-      const onData = (chunk) => {
-        buffer += chunk.toString();
-        // Try to parse complete JSON-RPC messages
-        const lines = buffer.split('\n');
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const msg = JSON.parse(line);
-            if (msg.id === messageId && msg.result) {
-              clearTimeout(timeout);
-              stdout.off('data', onData);
-              resolve(msg.result);
-              return;
-            }
-          } catch {
-            // Incomplete JSON, keep buffering
-          }
-        }
-        buffer = lines[lines.length - 1]; // Keep last incomplete line
-      };
-      
-      stdout.on('data', onData);
-      stdin.write(request + '\n');
-    });
+    // Fallback: use public client.request() with relaxed schema
+    log('Tools', `listTools() compat issue (expected), using client.request()...`, 'info');
+    const { z } = await import('zod');
+    const result = await client.request(
+      { method: 'tools/list', params: {} },
+      z.object({ tools: z.any() })
+    );
     
     if (result && result.tools) {
       toolNames = result.tools.map(t => t.name);
-      log('Tools', `Discovered ${toolNames.length} tools (via direct JSON-RPC)`, 'pass');
+      log('Tools', `Discovered ${toolNames.length} tools (via client.request)`, 'pass');
     } else {
       log('Tools', 'No tools found in response', 'fail');
     }
