@@ -204,8 +204,6 @@ try {
   for (const name of toolNames) {
     console.log(`     - ${name}`);
   }
-
-  log('Server', 'Client disconnected cleanly', 'pass');
   
 } catch (e) {
   log('Server', `MCP server test failed: ${e.message}`, 'fail');
@@ -213,9 +211,23 @@ try {
     log('Server', `  Cause: ${e.cause.message || e.cause}`, 'fail');
   }
 } finally {
-  // Always clean up: close client and kill the child process
-  try { await client?.close().catch(() => {}); } catch {}
-  try { transport?.process?.kill?.(); } catch {}
+  // Clean up: close client and kill the child process, log outcome
+  let cleanupOk = true;
+  try {
+    await client?.close();
+  } catch (closeErr) {
+    log('Server', `Client close failed: ${closeErr.message}`, 'fail');
+    cleanupOk = false;
+  }
+  try {
+    transport?.process?.kill?.();
+  } catch (killErr) {
+    log('Server', `Process kill failed: ${killErr.message}`, 'fail');
+    cleanupOk = false;
+  }
+  if (cleanupOk) {
+    log('Server', 'Client disconnected cleanly', 'pass');
+  }
 }
 
 // ──────────────────────────────────────────────
