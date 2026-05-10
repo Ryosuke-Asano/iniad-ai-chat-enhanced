@@ -19,6 +19,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@rarandeyo/iniad-moocs-mcp": "^0.0.4",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
