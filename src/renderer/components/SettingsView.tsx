@@ -317,7 +317,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
               <button
                 type="button"
                 className="settings-toggle-visibility"
-                onMouseDown={() => setShowApiKey(true)}
+                onMouseDown={(e) => { e.preventDefault(); setShowApiKey(true); }}
                 onMouseUp={() => setShowApiKey(false)}
                 onMouseLeave={() => setShowApiKey(false)}
                 aria-label="長押しでAPIキーを表示"
@@ -436,7 +436,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
               <button
                 type="button"
                 className="settings-toggle-visibility"
-                onMouseDown={() => setShowMoocsPassword(true)}
+                onMouseDown={(e) => { e.preventDefault(); setShowMoocsPassword(true); }}
                 onMouseUp={() => setShowMoocsPassword(false)}
                 onMouseLeave={() => setShowMoocsPassword(false)}
                 aria-label="長押しでパスワードを表示"
