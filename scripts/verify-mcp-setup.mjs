@@ -17,6 +17,7 @@ import { spawn } from 'child_process';
 import { createRequire } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
@@ -70,7 +71,6 @@ try {
   // cli.js is not in "exports", resolve via package directory
   const pkgDir = path.dirname(require.resolve('@rarandeyo/iniad-moocs-mcp/package.json'));
   const cliPath = path.join(pkgDir, 'cli.js');
-  const fs = await import('fs');
   if (fs.existsSync(cliPath)) {
     log('MOOCs MCP', `CLI path: ${cliPath}`, 'pass');
   } else {
@@ -89,10 +89,20 @@ try {
   log('Playwright', 'Playwright module imported', 'pass');
   
   const execPath = chromium.executablePath();
-  if (execPath) {
-    log('Chromium', `Executable: ${execPath}`, 'pass');
-  } else {
+  if (!execPath) {
     log('Chromium', 'Executable path not found - run: npx playwright install chromium', 'fail');
+  } else if (!fs.existsSync(execPath)) {
+    log('Chromium', `Binary does not exist at: ${execPath}`, 'fail');
+  } else {
+    log('Chromium', `Executable exists: ${execPath}`, 'pass');
+    // Verify the binary actually launches
+    let browser;
+    try {
+      browser = await chromium.launch({ headless: true, timeout: 10_000 });
+      log('Chromium', 'Browser launched successfully', 'pass');
+    } finally {
+      await browser?.close().catch(() => {});
+    }
   }
 } catch (e) {
   log('Playwright', `Failed: ${e.message}`, 'fail');
@@ -127,7 +137,7 @@ try {
     { capabilities: {} }
   );
 
-  // Timeout helper: wraps a promise to reject after `ms` milliseconds
+  // Timeout helper: only used for connect() which lacks a built-in timeout option
   const withTimeout = (promise, ms, label) =>
     Promise.race([
       promise,
@@ -147,23 +157,21 @@ try {
   // whose tool inputSchema doesn't pass the newer SDK v1.29.0's strict
   // validation. We use the public client.request() API with a relaxed
   // schema (z.any()) to bypass the strict validation.
+  // SDK supports per-request timeout via RequestOptions (3rd argument).
   let toolNames = [];
   try {
-    // First try the standard listTools()
-    const toolsResult = await withTimeout(client.listTools(), 10_000, 'listTools');
+    // First try the standard listTools() with SDK-native timeout
+    const toolsResult = await client.listTools({}, { timeout: 10_000 });
     toolNames = toolsResult.tools.map(t => t.name);
     log('Tools', `Discovered ${toolNames.length} tools`, 'pass');
   } catch (listErr) {
-    // Fallback: use public client.request() with relaxed schema
+    // Fallback: use public client.request() with relaxed schema and SDK-native timeout
     log('Tools', `listTools() compat issue (expected), using client.request()...`, 'info');
     const { z } = await import('zod');
-    const result = await withTimeout(
-      client.request(
-        { method: 'tools/list', params: {} },
-        z.object({ tools: z.any() })
-      ),
-      10_000,
-      'client.request(tools/list)'
+    const result = await client.request(
+      { method: 'tools/list', params: {} },
+      z.object({ tools: z.any() }),
+      { timeout: 10_000 }
     );
     
     if (result && result.tools) {
