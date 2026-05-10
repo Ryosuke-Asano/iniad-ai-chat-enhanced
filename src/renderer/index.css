@@ -502,6 +502,12 @@ body {
   color: var(--text-main);
 }
 
+.settings-toggle-visibility.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  border-color: var(--primary);
+}
+
 /* Validation errors */
 .settings-error {
   display: block;
