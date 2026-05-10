@@ -61,12 +61,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        // Main プロセスの IPC ハンドラが未登録の場合はスキップ
         if (window.electronAPI?.getSettings) {
           const loaded = await window.electronAPI.getSettings();
           setSettings(loaded);
         }
-      } catch (e) {
-        console.error("設定の読み込みに失敗しました:", e);
+      } catch {
+        // IPC ハンドラ未登録時のエラーは無視（モック動作）
       }
     };
     loadSettings();
@@ -279,9 +280,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
               <button
                 type="button"
                 className="settings-toggle-visibility"
-                onClick={() => setShowApiKey(!showApiKey)}
-                aria-label={showApiKey ? "APIキーを隠す" : "APIキーを表示"}
-                title={showApiKey ? "隠す" : "表示"}
+                onMouseDown={() => setShowApiKey(true)}
+                onMouseUp={() => setShowApiKey(false)}
+                onMouseLeave={() => setShowApiKey(false)}
+                aria-label="長押しでAPIキーを表示"
+                title="長押しで表示"
               >
                 {showApiKey ? "🙈" : "👁"}
               </button>
@@ -385,9 +388,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
               <button
                 type="button"
                 className="settings-toggle-visibility"
-                onClick={() => setShowMoocsPassword(!showMoocsPassword)}
-                aria-label={showMoocsPassword ? "パスワードを隠す" : "パスワードを表示"}
-                title={showMoocsPassword ? "隠す" : "表示"}
+                onMouseDown={() => setShowMoocsPassword(true)}
+                onMouseUp={() => setShowMoocsPassword(false)}
+                onMouseLeave={() => setShowMoocsPassword(false)}
+                aria-label="長押しでパスワードを表示"
+                title="長押しで表示"
               >
                 {showMoocsPassword ? "🙈" : "👁"}
               </button>
