@@ -83,14 +83,29 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>INIAD AI Chat Enhanced</h1>
-        <button
-          className={`settings-button ${currentView === "settings" ? "active" : ""}`}
-          onClick={() => switchView(currentView === "settings" ? "chat" : "settings")}
-          aria-label={currentView === "settings" ? "チャットに戻る" : "設定を開く"}
-        >
-          {currentView === "settings" ? "💬 チャット" : "⚙ 設定"}
-        </button>
+        {currentView === "chat" ? (
+          <>
+            <h1>INIAD AI Chat Enhanced</h1>
+            <button
+              className="settings-button"
+              onClick={() => switchView("settings")}
+              aria-label="設定を開く"
+            >
+              ⚙ 設定
+            </button>
+          </>
+        ) : (
+          <>
+            <h1>設定</h1>
+            <button
+              className="settings-button"
+              onClick={() => switchView("chat")}
+              aria-label="設定を閉じる"
+            >
+              ✕
+            </button>
+          </>
+        )}
       </header>
 
       {currentView === "chat" ? (

@@ -243,18 +243,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
 
   return (
     <div className="settings-view" id="settings-view">
-      <div className="settings-header">
-        <h2>⚙ 設定</h2>
-        <button
-          type="button"
-          className="settings-close-button"
-          onClick={onClose}
-          aria-label="設定を閉じる"
-        >
-          ✕
-        </button>
-      </div>
-
       <div className="settings-content">
         {/* ── API設定セクション ── */}
         <section className="settings-section" id="settings-api">
