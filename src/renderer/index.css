@@ -464,7 +464,7 @@ body {
 
 /* Secret input (custom masking with last-char reveal) */
 .settings-secret-input {
-  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-family: Consolas, Monaco, "Courier New", monospace;
   letter-spacing: 0.1em;
 }
 

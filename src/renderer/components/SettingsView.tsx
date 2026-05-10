@@ -103,7 +103,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         // Main プロセスの IPC ハンドラが未登録の場合はスキップ
         if (window.electronAPI?.getSettings) {
           const loaded = await window.electronAPI.getSettings();
-          setSettings(loaded);
+          setSettings({ ...DEFAULT_SETTINGS, ...loaded });
         }
       } catch {
         // IPC ハンドラ未登録時のエラーは無視（モック動作）
@@ -301,20 +301,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-apiKey"
-                type="text"
+                type={showApiKey ? "text" : "password"}
                 className={`settings-input settings-secret-input ${errors.apiKey ? "error" : ""}`}
-                value={getMaskedValue("apiKey", settings.apiKey, showApiKey)}
-                onChange={(e) => {
-                  const raw = settings.apiKey;
-                  const newVal = e.target.value;
-                  if (newVal.length > raw.length) {
-                    const added = newVal.slice(raw.length);
-                    updateSecretField("apiKey", raw + added);
-                  } else if (newVal.length < raw.length) {
-                    const diff = raw.length - newVal.length;
-                    updateSecretField("apiKey", raw.slice(0, raw.length - diff));
-                  }
-                }}
+                value={settings.apiKey}
+                onChange={(e) => updateSecretField("apiKey", e.target.value)}
                 placeholder="sk-..."
                 autoComplete="off"
               />
@@ -434,20 +424,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-moocsPassword"
-                type="text"
+                type={showMoocsPassword ? "text" : "password"}
                 className={`settings-input settings-secret-input ${errors.moocsPassword ? "error" : ""}`}
-                value={getMaskedValue("moocsPassword", settings.moocsPassword, showMoocsPassword)}
-                onChange={(e) => {
-                  const raw = settings.moocsPassword;
-                  const newVal = e.target.value;
-                  if (newVal.length > raw.length) {
-                    const added = newVal.slice(raw.length);
-                    updateSecretField("moocsPassword", raw + added);
-                  } else if (newVal.length < raw.length) {
-                    const diff = raw.length - newVal.length;
-                    updateSecretField("moocsPassword", raw.slice(0, raw.length - diff));
-                  }
-                }}
+                value={settings.moocsPassword}
+                onChange={(e) => updateSecretField("moocsPassword", e.target.value)}
                 placeholder="パスワード"
                 autoComplete="off"
               />
