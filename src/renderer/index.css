@@ -505,6 +505,15 @@ body {
   padding-left: 0.25rem;
 }
 
+.settings-hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+  padding-left: 0.25rem;
+  opacity: 0.8;
+}
+
 /* Test buttons */
 .settings-test-row {
   display: flex;

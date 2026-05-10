@@ -292,6 +292,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             {errors.apiKey && (
               <span className="settings-error">{errors.apiKey}</span>
             )}
+            <span className="settings-hint">※ INIAD Slack「GPT-4o mini」で取得可能</span>
           </div>
 
           <div className="settings-field">
