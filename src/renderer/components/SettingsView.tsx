@@ -258,9 +258,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-apiKey"
-                type={showApiKey || editedFields.has("apiKey") ? "text" : "password"}
+                type={showApiKey ? "text" : "password"}
                 className={`settings-input ${errors.apiKey ? "error" : ""}`}
-                value={getSecretDisplayValue("apiKey", showApiKey)}
+                value={settings.apiKey}
                 onChange={(e) => updateField("apiKey", e.target.value)}
                 placeholder="sk-..."
                 autoComplete="off"
@@ -367,9 +367,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-moocsPassword"
-                type={showMoocsPassword || editedFields.has("moocsPassword") ? "text" : "password"}
+                type={showMoocsPassword ? "text" : "password"}
                 className={`settings-input ${errors.moocsPassword ? "error" : ""}`}
-                value={getSecretDisplayValue("moocsPassword", showMoocsPassword)}
+                value={settings.moocsPassword}
                 onChange={(e) => updateField("moocsPassword", e.target.value)}
                 placeholder="パスワード"
                 autoComplete="off"
