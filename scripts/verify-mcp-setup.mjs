@@ -104,12 +104,15 @@ try {
 console.log('\n🔌 5. Testing MCP Server via stdio transport');
 console.log('   (Starting iniad-moocs-mcp server, this may take a moment...)');
 
+let transport;
+let client;
+
 try {
   // cli.js is not in "exports", resolve via package directory
   const pkgDir = path.dirname(require.resolve('@rarandeyo/iniad-moocs-mcp/package.json'));
   const cliPath = path.join(pkgDir, 'cli.js');
   
-  const transport = new StdioClientTransport({
+  transport = new StdioClientTransport({
     command: 'node',
     args: [cliPath, '--headless'],
     env: {
@@ -119,13 +122,26 @@ try {
     },
   });
 
-  const client = new Client(
+  client = new Client(
     { name: 'verify-test', version: '1.0.0' },
     { capabilities: {} }
   );
 
-  await client.connect(transport);
-  log('Server', 'Connected to MCP server via stdio', 'pass');
+  // Timeout helper: wraps a promise to reject after `ms` milliseconds
+  const withTimeout = (promise, ms, label) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+      ),
+    ]);
+
+  try {
+    await withTimeout(client.connect(transport), 15_000, 'client.connect');
+    log('Server', 'Connected to MCP server via stdio', 'pass');
+  } catch (connectErr) {
+    throw new Error(`Connection failed: ${connectErr.message}`);
+  }
 
   // List tools - iniad-moocs-mcp (v0.0.4) was built with an older SDK
   // whose tool inputSchema doesn't pass the newer SDK v1.29.0's strict
@@ -134,16 +150,20 @@ try {
   let toolNames = [];
   try {
     // First try the standard listTools()
-    const toolsResult = await client.listTools();
+    const toolsResult = await withTimeout(client.listTools(), 10_000, 'listTools');
     toolNames = toolsResult.tools.map(t => t.name);
     log('Tools', `Discovered ${toolNames.length} tools`, 'pass');
   } catch (listErr) {
     // Fallback: use public client.request() with relaxed schema
     log('Tools', `listTools() compat issue (expected), using client.request()...`, 'info');
     const { z } = await import('zod');
-    const result = await client.request(
-      { method: 'tools/list', params: {} },
-      z.object({ tools: z.any() })
+    const result = await withTimeout(
+      client.request(
+        { method: 'tools/list', params: {} },
+        z.object({ tools: z.any() })
+      ),
+      10_000,
+      'client.request(tools/list)'
     );
     
     if (result && result.tools) {
@@ -177,7 +197,6 @@ try {
     console.log(`     - ${name}`);
   }
 
-  await client.close();
   log('Server', 'Client disconnected cleanly', 'pass');
   
 } catch (e) {
@@ -185,6 +204,10 @@ try {
   if (e.cause) {
     log('Server', `  Cause: ${e.cause.message || e.cause}`, 'fail');
   }
+} finally {
+  // Always clean up: close client and kill the child process
+  try { await client?.close().catch(() => {}); } catch {}
+  try { transport?.process?.kill?.(); } catch {}
 }
 
 // ──────────────────────────────────────────────
