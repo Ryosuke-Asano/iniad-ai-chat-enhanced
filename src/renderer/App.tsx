@@ -40,7 +40,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [mcpConnectionStatus, setMcpConnectionStatus] = useState<"connected" | "disconnected" | "connecting">("connected");
   const [currentView, setCurrentView] = useState<ViewType>("chat");
-  const [viewAnimation, setViewAnimation] = useState<string>("");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -49,10 +48,9 @@ const App: React.FC = () => {
     };
   }, []);
 
-  /** ビュー切替（トランジション付き） */
+  /** ビュー切替 */
   const switchView = (target: ViewType) => {
     if (target === currentView) return;
-    setViewAnimation(target === "settings" ? "view-enter-settings" : "view-enter-chat");
     setCurrentView(target);
   };
 
@@ -80,10 +78,12 @@ const App: React.FC = () => {
     }, 1000);
   };
 
+  const isChat = currentView === "chat";
+
   return (
     <div className="app">
       <header className="app-header">
-        {currentView === "chat" ? (
+        {isChat ? (
           <>
             <h1>INIAD AI Chat Enhanced</h1>
             <button
@@ -108,18 +108,19 @@ const App: React.FC = () => {
         )}
       </header>
 
-      {currentView === "chat" ? (
-        <React.Fragment key="chat-view">
-          <main className={`app-main ${viewAnimation}`} onAnimationEnd={() => setViewAnimation("")}>
-            <ChatView messages={messages} />
-          </main>
-          <ChatInput onSend={handleSend} disabled={isLoading} />
-        </React.Fragment>
-      ) : (
-        <main className={`app-main ${viewAnimation}`} onAnimationEnd={() => setViewAnimation("")}>
+      {/* 両ビューを常にマウントし、CSSトランジションで切替 */}
+      <div className={`view-layer ${isChat ? "view-active" : "view-hidden"}`}>
+        <main className="app-main">
+          <ChatView messages={messages} />
+        </main>
+        <ChatInput onSend={handleSend} disabled={isLoading} />
+      </div>
+
+      <div className={`view-layer ${!isChat ? "view-active" : "view-hidden"}`}>
+        <main className="app-main">
           <SettingsView onClose={() => switchView("chat")} />
         </main>
-      )}
+      </div>
       
       <StatusBar mcpStatus={mcpConnectionStatus} model="GPT-5.4-nano (Mock)" />
     </div>
