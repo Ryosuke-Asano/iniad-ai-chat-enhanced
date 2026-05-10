@@ -271,9 +271,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         <span
           className={`settings-test-result ${result.status}`}
         >
-          {result.status === "testing" && "⏳"}
-          {result.status === "success" && "✅"}
-          {result.status === "error" && "❌"}
+          {result.status === "testing" && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="settings-icon-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>}
+          {result.status === "success" && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a6e3a1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+          {result.status === "error" && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>}
           {result.message && ` ${result.message}`}
         </span>
       )}
@@ -286,7 +286,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         {/* ── API設定セクション ── */}
         <section className="settings-section" id="settings-api">
           <h3 className="settings-section-title">
-            <span className="settings-section-icon">🔑</span>
+            <span className="settings-section-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+              </svg>
+            </span>
             API設定
           </h3>
 
@@ -358,7 +362,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         {/* ── モデル設定セクション ── */}
         <section className="settings-section" id="settings-model">
           <h3 className="settings-section-title">
-            <span className="settings-section-icon">🤖</span>
+            <span className="settings-section-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M12 3c-1.66 0-3 1.34-3 3v5h6V6c0-1.66-1.34-3-3-3z" />
+                <circle cx="12" cy="16" r="1" />
+              </svg>
+            </span>
             モデル設定
           </h3>
 
@@ -387,7 +397,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         {/* ── MOOCs認証セクション ── */}
         <section className="settings-section" id="settings-moocs">
           <h3 className="settings-section-title">
-            <span className="settings-section-icon">🎓</span>
+            <span className="settings-section-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
+              </svg>
+            </span>
             INIAD MOOCs 認証
           </h3>
           <p className="settings-section-description">
@@ -464,7 +479,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
       <div className="settings-footer">
         {saveMessage && (
           <span className={`settings-save-message ${saveMessage.type}`}>
-            {saveMessage.type === "success" ? "✅" : "⚠️"} {saveMessage.text}
+            {saveMessage.type === "success"
+              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a6e3a1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '4px'}}><polyline points="20 6 9 17 4 12" /></svg>
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '4px'}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+            }
+            {saveMessage.text}
           </span>
         )}
         <div className="settings-footer-buttons">

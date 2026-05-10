@@ -560,6 +560,9 @@ body {
 .settings-test-result {
   font-size: 0.85rem;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .settings-test-result.success {
@@ -568,6 +571,20 @@ body {
 
 .settings-test-result.error {
   color: #f38ba8;
+}
+
+/* SVG spinner animation for testing state */
+@keyframes settings-spin {
+  to { transform: rotate(360deg); }
+}
+
+.settings-icon-spin {
+  animation: settings-spin 1s linear infinite;
+}
+
+/* Section icons alignment */
+.settings-section-icon svg {
+  vertical-align: middle;
 }
 
 /* Footer */
