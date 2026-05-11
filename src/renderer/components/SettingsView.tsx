@@ -71,7 +71,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   }, []);
 
   /** 秘密フィールドの表示値を生成（最後の1文字だけ一瞬見せる） */
-  const getMaskedValue = (field: string, raw: string, forceShow: boolean): string => {
+  const _getMaskedValue = (field: string, raw: string, forceShow: boolean): string => {
     if (!raw) return "";
     if (forceShow) return raw;
     return raw
@@ -156,17 +156,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     [editedFields]
   );
 
-  // リアルタイムバリデーション
-  useEffect(() => {
-    const newErrors = validate(settings);
-    setErrors(newErrors);
-  }, [settings, validate]);
-
   // ── フィールド更新 ──
   const updateField = (field: keyof AppSettings, value: string) => {
-    setSettings((prev) => ({ ...prev, [field]: value }));
+    const newSettings = { ...settings, [field]: value };
+    setSettings(newSettings);
     setEditedFields((prev) => new Set(prev).add(field));
     setSaveMessage(null);
+
+    // バリデーションを実行
+    const newErrors = validate(newSettings);
+    setErrors(newErrors);
   };
 
   // ── 保存 ──
@@ -252,7 +251,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   };
 
   // ── 表示ヘルパー ──
-  const getSecretDisplayValue = (field: "apiKey" | "moocsPassword", showRaw: boolean): string => {
+  const _getSecretDisplayValue = (field: "apiKey" | "moocsPassword", showRaw: boolean): string => {
     const value = settings[field];
     if (!value) return "";
     if (editedFields.has(field)) return value; // 編集中は常に平文
