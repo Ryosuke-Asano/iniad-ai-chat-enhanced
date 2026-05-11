@@ -38,7 +38,7 @@ const MOCK_MESSAGES: ChatTurn[] = [
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatTurn[]>(MOCK_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
-  const [mcpConnectionStatus, setMcpConnectionStatus] = useState<"connected" | "disconnected" | "connecting">("connected");
+  const [mcpConnectionStatus, _setMcpConnectionStatus] = useState<"connected" | "disconnected" | "connecting">("connected");
   const [currentView, setCurrentView] = useState<ViewType>("chat");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
