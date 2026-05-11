@@ -7,17 +7,13 @@ interface StatusBarProps {
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({ mcpStatus, model }) => {
-  const getStatusIndicator = () => {
-    switch (mcpStatus) {
-      case "connected":
-        return <span className="status-indicator connected">●</span>;
-      case "connecting":
-        return <span className="status-indicator connecting">●</span>;
-      case "disconnected":
-      default:
-        return <span className="status-indicator disconnected">●</span>;
-    }
-  };
+  const statusDot = (
+    <svg width="10" height="10" viewBox="0 0 10 10" className={`status-indicator ${mcpStatus}`}>
+      <circle cx="5" cy="5" r="5" fill="currentColor" />
+    </svg>
+  );
+
+  const getStatusIndicator = () => statusDot;
 
   const getStatusText = () => {
     switch (mcpStatus) {
