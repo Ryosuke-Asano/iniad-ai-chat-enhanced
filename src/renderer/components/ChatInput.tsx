@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 
-
 interface ChatInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
@@ -50,11 +49,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
           disabled={disabled}
           rows={1}
         />
-        <button
-          type="submit"
-          className="chat-input-button"
-          disabled={disabled || !text.trim()}
-        >
+        <button type="submit" className="chat-input-button" disabled={disabled || !text.trim()}>
           送信
         </button>
       </form>
