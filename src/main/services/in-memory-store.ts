@@ -1,0 +1,51 @@
+/**
+ * インメモリ状態管理クラス（MVP用）
+ *
+ * 将来のSettingsStore実装までの一時的な実装。
+ * チャット履歴とアプリステータスをメモリ上で管理する。
+ */
+
+import type { ChatTurn, AppStatus, McpStatus } from "../../shared/types";
+
+export class InMemoryStore {
+  private chatHistory: ChatTurn[] = [];
+  private mcpStatus: McpStatus = "disconnected";
+  private currentModel: string = "gpt-5.4-nano";
+  private hasApiKey: boolean = false;
+
+  addMessage(message: ChatTurn): void {
+    this.chatHistory.push(message);
+  }
+
+  getHistory(): ChatTurn[] {
+    return [...this.chatHistory];
+  }
+
+  clearHistory(): void {
+    this.chatHistory = [];
+  }
+
+  getMcpStatus(): McpStatus {
+    return this.mcpStatus;
+  }
+
+  setMcpStatus(status: McpStatus): void {
+    this.mcpStatus = status;
+  }
+
+  getAppStatus(): AppStatus {
+    return {
+      mcpStatus: this.mcpStatus,
+      model: this.currentModel,
+      hasApiKey: this.hasApiKey,
+    };
+  }
+
+  setModel(model: string): void {
+    this.currentModel = model;
+  }
+
+  setHasApiKey(hasKey: boolean): void {
+    this.hasApiKey = hasKey;
+  }
+}
