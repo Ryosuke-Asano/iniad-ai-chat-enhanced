@@ -95,9 +95,7 @@ export class McpClient {
       // MCP サーバの CLI エントリポイントを解決
       // cli.js は "exports" に含まれていないため、package.json 経由でパスを解決
       const require = createRequire(__filename);
-      const pkgDir = path.dirname(
-        require.resolve("@rarandeyo/iniad-moocs-mcp/package.json"),
-      );
+      const pkgDir = path.dirname(require.resolve("@rarandeyo/iniad-moocs-mcp/package.json"));
       const cliPath = path.join(pkgDir, "cli.js");
 
       // stdio トランスポートで子プロセス起動
@@ -111,10 +109,7 @@ export class McpClient {
         },
       });
 
-      this.client = new Client(
-        { name: "iniad-ai-chat", version: "1.0.0" },
-        { capabilities: {} },
-      );
+      this.client = new Client({ name: "iniad-ai-chat", version: "1.0.0" }, { capabilities: {} });
 
       // 接続（SDK connect には timeout option がないため Promise.race で制御）
       await Promise.race([
@@ -122,8 +117,8 @@ export class McpClient {
         new Promise<never>((_, reject) =>
           setTimeout(
             () => reject(new Error(`Connection timed out after ${CONNECT_TIMEOUT_MS / 1000}s`)),
-            CONNECT_TIMEOUT_MS,
-          ),
+            CONNECT_TIMEOUT_MS
+          )
         ),
       ]);
 
@@ -136,8 +131,7 @@ export class McpClient {
         throw error;
       }
 
-      const message =
-        error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
 
       // エラー分類
       if (message.includes("timed out") || message.includes("ETIMEDOUT")) {
@@ -148,10 +142,7 @@ export class McpClient {
         message.includes("spawn") ||
         message.includes("module not found")
       ) {
-        throw new AppError(
-          "MCP_CONNECTION_FAILED",
-          `MCP server failed to start: ${message}`,
-        );
+        throw new AppError("MCP_CONNECTION_FAILED", `MCP server failed to start: ${message}`);
       }
 
       throw new AppError("MCP_CONNECTION_FAILED", `MCP connection failed: ${message}`);
@@ -179,7 +170,7 @@ export class McpClient {
    * @returns 検索結果と成功/失敗のフラグ
    */
   async searchMoocs(
-    query: string,
+    query: string
   ): Promise<{ success: boolean; results: SearchResult[]; error?: string }> {
     if (this.status !== "connected" || !this.client) {
       return {
@@ -260,8 +251,7 @@ export class McpClient {
 
       return { success: true, results };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
 
       if (message.includes("timed out") || message.includes("ETIMEDOUT")) {
         return {
@@ -289,26 +279,20 @@ export class McpClient {
    * iniad-moocs-mcp v0.0.4 は古い SDK でビルドされているため、
    * 新しい SDK のスキーマ検証を通らない場合がある。
    */
-  private async callToolSafe(
-    toolName: string,
-    args?: Record<string, unknown>,
-  ): Promise<unknown> {
+  private async callToolSafe(toolName: string, args?: Record<string, unknown>): Promise<unknown> {
     if (!this.client) {
       throw new Error("MCP client is not initialized");
     }
 
     try {
       // 標準 callTool を試行（SDK ネイティブ timeout）
-      const result = await this.client.callTool(
-        { name: toolName, arguments: args },
-        undefined,
-        { timeout: TOOL_TIMEOUT_MS },
-      );
+      const result = await this.client.callTool({ name: toolName, arguments: args }, undefined, {
+        timeout: TOOL_TIMEOUT_MS,
+      });
       return result;
     } catch (callToolError) {
       // バリデーションエラーの場合、client.request() でフォールバック
-      const errMsg =
-        callToolError instanceof Error ? callToolError.message : "";
+      const errMsg = callToolError instanceof Error ? callToolError.message : "";
 
       if (
         errMsg.includes("validation") ||
@@ -323,7 +307,7 @@ export class McpClient {
             params: { name: toolName, arguments: args ?? {} },
           },
           z.any(),
-          { timeout: TOOL_TIMEOUT_MS },
+          { timeout: TOOL_TIMEOUT_MS }
         );
         return result;
       }
@@ -337,7 +321,7 @@ export class McpClient {
    * コース一覧を取得する
    */
   private async fetchCourses(): Promise<CourseSummary[]> {
-    const result = await this.callToolSafe("listCourses") as {
+    const result = (await this.callToolSafe("listCourses")) as {
       content?: Array<{ type: string; text?: string }>;
     };
 
@@ -348,7 +332,7 @@ export class McpClient {
    * 講義リンク一覧を取得する
    */
   private async fetchLectureLinks(): Promise<LectureLink[]> {
-    const result = await this.callToolSafe("listLectureLinks") as {
+    const result = (await this.callToolSafe("listLectureLinks")) as {
       content?: Array<{ type: string; text?: string }>;
     };
 
@@ -359,7 +343,7 @@ export class McpClient {
    * スライドリンク一覧を取得する
    */
   private async fetchSlideLinks(): Promise<SlideLink[]> {
-    const result = await this.callToolSafe("listSlideLinks") as {
+    const result = (await this.callToolSafe("listSlideLinks")) as {
       content?: Array<{ type: string; text?: string }>;
     };
 
@@ -372,7 +356,7 @@ export class McpClient {
    * MCP ツールの戻り値は `content` 配列に格納される。
    * text タイプのコンテンツを JSON としてパースして返す。
    */
-  private parseToolResult<T>(result: unknown, toolName: string): T[] {
+  private parseToolResult<T>(result: unknown, _toolName: string): T[] {
     if (!result || typeof result !== "object") {
       return [];
     }
@@ -412,9 +396,7 @@ export class McpClient {
   private matchesQuery(title: string, normalizedQuery: string): boolean {
     const normalizedTitle = title.toLowerCase();
     // クエリをスペース/記号で分割し、すべてのトークンがタイトルに含まれるか
-    const tokens = normalizedQuery
-      .split(/[\s\-_.]+/)
-      .filter((t) => t.length > 0);
+    const tokens = normalizedQuery.split(/[\s\-_.]+/).filter((t) => t.length > 0);
     return tokens.every((token) => normalizedTitle.includes(token));
   }
 
@@ -423,9 +405,7 @@ export class McpClient {
    */
   private computeRelevance(title: string, normalizedQuery: string): number {
     const lower = title.toLowerCase();
-    const tokens = normalizedQuery
-      .split(/[\s\-_.]+/)
-      .filter((t) => t.length > 0);
+    const tokens = normalizedQuery.split(/[\s\-_.]+/).filter((t) => t.length > 0);
 
     let matched = 0;
     for (const token of tokens) {
