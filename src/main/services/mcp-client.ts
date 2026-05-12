@@ -130,27 +130,7 @@ export class McpClient {
     } catch (error) {
       this.status = "disconnected";
       await this.cleanupResources();
-
-      // 既に分類済みの AppError は再分類をスキップ
-      if (error instanceof AppError) {
-        throw error;
-      }
-
-      const message = error instanceof Error ? error.message : String(error);
-
-      // エラー分類
-      if (message.includes("timed out") || message.includes("ETIMEDOUT")) {
-        throw new AppError("MCP_TIMEOUT", `MCP connection timed out: ${message}`);
-      }
-      if (
-        message.includes("ENOENT") ||
-        message.includes("spawn") ||
-        message.includes("module not found")
-      ) {
-        throw new AppError("MCP_CONNECTION_FAILED", `MCP server failed to start: ${message}`);
-      }
-
-      throw new AppError("MCP_CONNECTION_FAILED", `MCP connection failed: ${message}`);
+      throw this.classifyError(error);
     }
   }
 
@@ -454,6 +434,32 @@ export class McpClient {
     // 完全一致ボーナス
     const bonus = lower === normalizedQuery ? 0.1 : 0;
     return Math.min(1, matched / tokens.length + bonus);
+  }
+
+  // ── エラー分類 ────────────────────────────
+
+  /**
+   * エラーを分類して AppError に変換する
+   */
+  private classifyError(error: unknown): AppError {
+    if (error instanceof AppError) {
+      return error;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes("timed out") || message.includes("ETIMEDOUT")) {
+      return new AppError("MCP_TIMEOUT", `MCP connection timed out: ${message}`);
+    }
+    if (
+      message.includes("ENOENT") ||
+      message.includes("spawn") ||
+      message.includes("module not found")
+    ) {
+      return new AppError("MCP_CONNECTION_FAILED", `MCP server failed to start: ${message}`);
+    }
+
+    return new AppError("MCP_CONNECTION_FAILED", `MCP connection failed: ${message}`);
   }
 
   // ── クリーンアップ ──────────────────────────
