@@ -96,7 +96,11 @@ export class SettingsStore {
 
       for (const [key, value] of Object.entries(partialSettings)) {
         // バリデーション: 既知のキー && 文字列型 && 空文字でない
-        if (knownKeys.includes(key as (typeof knownKeys)[number]) && typeof value === "string" && value !== "") {
+        if (
+          knownKeys.includes(key as (typeof knownKeys)[number]) &&
+          typeof value === "string" &&
+          value !== ""
+        ) {
           (updated as Record<string, string>)[key] = value;
         }
         // undefined/null や未知のキーは無音でスキップ
