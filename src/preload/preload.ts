@@ -19,8 +19,7 @@ import type {
 const api = {
   // ── チャット操作 ──
   /** ユーザーメッセージを送信し、AIの回答を取得する */
-  sendChat: (userText: string): Promise<ChatResponse> =>
-    ipcRenderer.invoke("chat:send", userText),
+  sendChat: (userText: string): Promise<ChatResponse> => ipcRenderer.invoke("chat:send", userText),
 
   /** 送信中のチャットをキャンセルする */
   cancelChat: (): Promise<void> => ipcRenderer.invoke("chat:cancel"),
@@ -45,18 +44,15 @@ const api = {
     ipcRenderer.invoke("settings:set", settings),
 
   /** INIAD API への接続テスト */
-  testApiConnection: (): Promise<ConnectionTestResult> =>
-    ipcRenderer.invoke("settings:test-api"),
+  testApiConnection: (): Promise<ConnectionTestResult> => ipcRenderer.invoke("settings:test-api"),
 
   /** MCP サーバへの接続テスト */
-  testMcpConnection: (): Promise<ConnectionTestResult> =>
-    ipcRenderer.invoke("settings:test-mcp"),
+  testMcpConnection: (): Promise<ConnectionTestResult> => ipcRenderer.invoke("settings:test-mcp"),
 
   // ── イベントリスナ（Main→Renderer へのプッシュ通知） ──
   /** MCP 接続状態の変更を監視する（cleanup 関数を返す） */
   onMcpStatusChange: (callback: (status: McpStatus) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, status: McpStatus) =>
-      callback(status);
+    const handler = (_event: Electron.IpcRendererEvent, status: McpStatus) => callback(status);
     ipcRenderer.on("mcp:status", handler);
     return () => {
       ipcRenderer.removeListener("mcp:status", handler);

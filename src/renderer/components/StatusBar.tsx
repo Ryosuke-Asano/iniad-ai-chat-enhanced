@@ -1,6 +1,5 @@
 import React from "react";
 
-
 interface StatusBarProps {
   mcpStatus: "connected" | "disconnected" | "connecting";
   model: string;

@@ -1,7 +1,6 @@
 import React from "react";
 import { Citation } from "../../shared/types/chat";
 
-
 interface CitationPanelProps {
   citations: Citation[];
 }
@@ -28,11 +27,19 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ citations }) => {
           <li key={`${citation.url}-${index}`} className="citation-item">
             <span className="citation-title">• {citation.title}</span>
             {isSafeUrl(citation.url) ? (
-              <a href={citation.url} target="_blank" rel="noopener noreferrer" className="citation-url">
+              <a
+                href={citation.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="citation-url"
+              >
                 {citation.url}
               </a>
             ) : (
-              <span className="citation-url" style={{ color: "var(--text-muted)", cursor: "not-allowed", pointerEvents: "none" }}>
+              <span
+                className="citation-url"
+                style={{ color: "var(--text-muted)", cursor: "not-allowed", pointerEvents: "none" }}
+              >
                 {citation.url}
               </span>
             )}

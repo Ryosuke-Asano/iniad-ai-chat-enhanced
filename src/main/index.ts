@@ -28,7 +28,7 @@ const createWindow = (): void => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // 開発時のみ DevTools を有効化
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     mainWindow.webContents.openDevTools();
   }
 };

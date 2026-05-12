@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from "react";
 import { ChatTurn } from "../../shared/types/chat";
 import { MessageBubble } from "./MessageBubble";
 
-
 interface ChatViewProps {
   messages: ChatTurn[];
 }
@@ -22,9 +21,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages }) => {
           <p>質問を入力して会話を始めましょう</p>
         </div>
       ) : (
-        messages.map((msg) => (
-          <MessageBubble key={msg.id} turn={msg} />
-        ))
+        messages.map((msg) => <MessageBubble key={msg.id} turn={msg} />)
       )}
       <div ref={bottomRef} />
     </div>

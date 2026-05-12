@@ -10,7 +10,11 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": {
@@ -37,9 +41,16 @@
     "@electron/fuses": "^1.8.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
     "css-loader": "^7.1.4",
     "electron": "41.3.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "playwright": "^1.59.1",
+    "prettier": "^3.5.3",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.7",
     "typescript": "^6.0.3"
