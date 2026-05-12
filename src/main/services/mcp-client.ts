@@ -397,8 +397,11 @@ export class McpClient {
       return [];
     }
 
+    let hadTextItems = false;
+
     for (const item of typedResult.content) {
       if (item.type === "text" && item.text) {
+        hadTextItems = true;
         try {
           const parsed = JSON.parse(item.text);
           if (Array.isArray(parsed)) {
@@ -407,10 +410,17 @@ export class McpClient {
           // オブジェクトの場合は配列にラップ
           return [parsed] as T[];
         } catch {
-          // JSON パース失敗 → テキストとして扱う
-          return [];
+          // JSON パース失敗 → 次のアイテムを試す
+          continue;
         }
       }
+    }
+
+    // 全テキストアイテムがパース失敗 → MCP レスポンス異常の可能性
+    if (hadTextItems) {
+      console.warn(
+        `[McpClient] parseToolResult: all text items failed JSON parse for tool "${_toolName}"`
+      );
     }
 
     return [];
