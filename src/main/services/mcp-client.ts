@@ -192,6 +192,12 @@ export class McpClient {
       };
     }
 
+    // 空白のみのクエリを拒否（matchesQuery が全マッチ、computeRelevance が NaN になるのを防止）
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return { success: true, results: [] };
+    }
+
     // キャッシュチェック
     const cacheKey = query.toLowerCase().trim();
     let sessionCache = this.currentSessionId ? this.cache.get(this.currentSessionId) : undefined;
@@ -211,7 +217,7 @@ export class McpClient {
       const slides = await this.fetchSlideLinks();
 
       // 4. クエリでフィルタリングして SearchResult[] に変換
-      const normalizedQuery = query.toLowerCase();
+      const normalizedQuery = trimmedQuery.toLowerCase();
       const results: SearchResult[] = [];
 
       // コースをフィルタリング
