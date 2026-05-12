@@ -18,6 +18,8 @@ import path from "path";
 import { z } from "zod";
 
 import { AppError } from "../../shared/types/errors";
+
+import { randomUUID } from "crypto";
 import type {
   CourseSummary,
   LectureLink,
@@ -61,7 +63,8 @@ export class McpClient {
   private status: McpStatus = "disconnected";
   private client: Client | null = null;
   private transport: StdioClientTransport | null = null;
-  private cache = new Map<string, { data: SearchResult[]; expiresAt: number }>();
+  private currentSessionId: string | null = null;
+  private cache = new Map<string, Map<string, { data: SearchResult[]; expiresAt: number }>>();
 
   // ── 接続状態 ──────────────────────────────
 
@@ -92,6 +95,9 @@ export class McpClient {
     this.status = "connecting";
 
     try {
+      // セッションIDを生成
+      this.currentSessionId = randomUUID();
+
       // MCP サーバの CLI エントリポイントを解決
       // cli.js は "exports" に含まれていないため、package.json 経由でパスを解決
       const require = createRequire(__filename);
@@ -153,8 +159,14 @@ export class McpClient {
    * MCP サーバから切断する
    */
   async disconnect(): Promise<void> {
+    // セッションのキャッシュをクリア
+    if (this.currentSessionId) {
+      this.cache.delete(this.currentSessionId);
+    }
+
     await this.cleanupResources();
     this.status = "disconnected";
+    this.currentSessionId = null;
   }
 
   // ── MOOCs 検索 ────────────────────────────
@@ -182,7 +194,8 @@ export class McpClient {
 
     // キャッシュチェック
     const cacheKey = query.toLowerCase().trim();
-    const cached = this.cache.get(cacheKey);
+    let sessionCache = this.currentSessionId ? this.cache.get(this.currentSessionId) : undefined;
+    const cached = sessionCache?.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       return { success: true, results: cached.data };
     }
@@ -244,7 +257,11 @@ export class McpClient {
       results.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
 
       // キャッシュに保存
-      this.cache.set(cacheKey, {
+      if (!sessionCache) {
+        sessionCache = new Map();
+        this.cache.set(this.currentSessionId!, sessionCache);
+      }
+      sessionCache.set(cacheKey, {
         data: results,
         expiresAt: Date.now() + CACHE_TTL_MS,
       });
@@ -321,6 +338,11 @@ export class McpClient {
    * コース一覧を取得する
    */
   private async fetchCourses(): Promise<CourseSummary[]> {
+    // セッションのキャッシュを初期化
+    if (this.currentSessionId && !this.cache.has(this.currentSessionId)) {
+      this.cache.set(this.currentSessionId, new Map());
+    }
+
     const result = (await this.callToolSafe("listCourses")) as {
       content?: Array<{ type: string; text?: string }>;
     };
@@ -446,9 +468,15 @@ export class McpClient {
    */
   cleanupCache(): void {
     const now = Date.now();
-    for (const [key, entry] of this.cache) {
-      if (entry.expiresAt <= now) {
-        this.cache.delete(key);
+    for (const [sessionId, sessionCache] of this.cache) {
+      for (const [key, entry] of sessionCache) {
+        if (entry.expiresAt <= now) {
+          sessionCache.delete(key);
+        }
+      }
+      // セッションキャッシュが空になったらセッション自体を削除
+      if (sessionCache.size === 0) {
+        this.cache.delete(sessionId);
       }
     }
   }
