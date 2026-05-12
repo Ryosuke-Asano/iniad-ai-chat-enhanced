@@ -186,14 +186,12 @@ export class McpClient {
     }
 
     try {
-      // 1. コース一覧取得
-      const courses = await this.fetchCourses();
-
-      // 2. 講義リンク取得
-      const lectures = await this.fetchLectureLinks();
-
-      // 3. スライドリンク取得
-      const slides = await this.fetchSlideLinks();
+      // 1. コース・講義・スライドを並列取得
+      const [courses, lectures, slides] = await Promise.all([
+        this.fetchCourses(),
+        this.fetchLectureLinks(),
+        this.fetchSlideLinks(),
+      ]);
 
       // 4. クエリでフィルタリングして SearchResult[] に変換
       const normalizedQuery = trimmedQuery.toLowerCase();
