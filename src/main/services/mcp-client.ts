@@ -11,14 +11,12 @@
  * - 接続状態管理（connected / disconnected / connecting）
  */
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio";
 import { createRequire } from "module";
 import path from "path";
 import { z } from "zod";
-
 import { AppError } from "../../shared/types/errors";
-
 import { randomUUID } from "crypto";
 import type {
   CourseSummary,
