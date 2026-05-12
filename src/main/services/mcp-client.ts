@@ -131,6 +131,7 @@ export class McpClient {
       this.status = "disconnected";
       await this.cleanupResources();
 
+      // 既に分類済みの AppError は再分類をスキップ
       if (error instanceof AppError) {
         throw error;
       }
