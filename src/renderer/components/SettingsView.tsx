@@ -68,7 +68,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
    * 秘密フィールドの入力を処理する
    * 表示上の値（マスク文字を含む）から実際の値を復元する
    */
-  const handleSecretChange = (field: keyof AppSettings, newValue: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSecretChange = (
+    field: keyof AppSettings,
+    newValue: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const oldValue = settings[field];
     const selectionStart = e.target.selectionStart || 0;
 
@@ -78,7 +82,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     if (newValue.length > oldValue.length) {
       // 文字が追加された場合
       const addedChar = newValue.charAt(selectionStart - 1);
-      updatedValue = oldValue.slice(0, selectionStart - 1) + addedChar + oldValue.slice(selectionStart - 1);
+      updatedValue =
+        oldValue.slice(0, selectionStart - 1) + addedChar + oldValue.slice(selectionStart - 1);
 
       // 最後に打った文字を一瞬見せる
       if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
@@ -527,9 +532,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
 
       <div className="settings-footer">
         {saveMessage && (
-          <span className={`settings-save-message ${saveMessage.type}`}>
-            {saveMessage.text}
-          </span>
+          <span className={`settings-save-message ${saveMessage.type}`}>{saveMessage.text}</span>
         )}
         <div className="settings-footer-buttons">
           <button type="button" className="settings-button-cancel" onClick={onClose}>
