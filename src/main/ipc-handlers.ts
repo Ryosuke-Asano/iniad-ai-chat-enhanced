@@ -1,6 +1,19 @@
 import { ipcMain } from "electron";
 import { DEFAULT_SETTINGS } from "../shared/types";
 
+/**
+ * 機密情報を部分的にマスクする
+ */
+function maskSecret(val: any): string {
+  if (typeof val !== "string" || !val) return String(val);
+  const len = val.length;
+  if (len <= 4) return "****";
+  // 最低でも3分の1以上を隠し、前後最大4文字を表示する
+  const show = Math.min(4, Math.floor(len / 3));
+  if (show === 0) return "****";
+  return `${val.slice(0, show)}....${val.slice(-show)}`;
+}
+
 export function registerIpcHandlers() {
   // ── 設定 ──
   ipcMain.handle("settings:get", async () => {
@@ -9,7 +22,11 @@ export function registerIpcHandlers() {
   });
 
   ipcMain.handle("settings:set", async (_event, settings) => {
-    console.log("[Mock IPC] settings:set called", settings);
+    const sanitized = { ...settings };
+    if ("apiKey" in sanitized) sanitized.apiKey = maskSecret(sanitized.apiKey);
+    if ("moocsPassword" in sanitized) sanitized.moocsPassword = maskSecret(sanitized.moocsPassword);
+
+    console.log("[Mock IPC] settings:set called", sanitized);
     return { success: true };
   });
 
@@ -55,6 +72,7 @@ export function registerIpcHandlers() {
     return {
       mcpStatus: "connected",
       model: "gpt-5.4-mini",
+      hasApiKey: true,
     };
   });
 }

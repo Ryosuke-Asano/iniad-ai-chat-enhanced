@@ -54,6 +54,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   const [apiTestResult, setApiTestResult] = useState<TestResult>({ status: "idle" });
   const [mcpTestResult, setMcpTestResult] = useState<TestResult>({ status: "idle" });
 
+  // ── 秘密情報の設定済みフラグ（Main側の実値は保持しない） ──
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [hasMoocsPassword, setHasMoocsPassword] = useState(false);
+
   // ── 最後の文字を一瞬見せるマスキング ──
   const [revealIndex, setRevealIndex] = useState<{ field: string; index: number } | null>(null);
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -74,31 +78,50 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const oldValue = settings[field];
-    const selectionStart = e.target.selectionStart || 0;
+    const isMasked = field === "apiKey" ? !showApiKey : !showMoocsPassword;
 
-    let updatedValue = oldValue;
+    // 表示が非表示（マスク状態）でない場合はそのまま更新
+    if (!isMasked) {
+      updateField(field, newValue);
+      return;
+    }
 
-    // マスク文字（●）を実際の文字に置き換える前の、現在のカーソル位置の文字を特定
-    if (newValue.length > oldValue.length) {
-      // 文字が追加された場合
-      const addedChar = newValue.charAt(selectionStart - 1);
-      updatedValue =
-        oldValue.slice(0, selectionStart - 1) + addedChar + oldValue.slice(selectionStart - 1);
+    const maskedOldValue = getDisplayValue(field, false);
 
-      // 最後に打った文字を一瞬見せる
+    // 前方一致の長さを求める
+    let prefixLen = 0;
+    while (
+      prefixLen < newValue.length &&
+      prefixLen < maskedOldValue.length &&
+      newValue[prefixLen] === maskedOldValue[prefixLen]
+    ) {
+      prefixLen++;
+    }
+
+    // 後方一致の長さを求める
+    let suffixLen = 0;
+    while (
+      suffixLen < newValue.length - prefixLen &&
+      suffixLen < maskedOldValue.length - prefixLen &&
+      newValue[newValue.length - 1 - suffixLen] ===
+        maskedOldValue[maskedOldValue.length - 1 - suffixLen]
+    ) {
+      suffixLen++;
+    }
+
+    // 変更部分を抽出して実際の値を再構成
+    const addedText = newValue.slice(prefixLen, newValue.length - suffixLen);
+    const updatedValue =
+      oldValue.slice(0, prefixLen) + addedText + oldValue.slice(oldValue.length - suffixLen);
+
+    // 1文字追加または置換された場合のみ、一瞬だけ表示する（ピーキング）
+    if (addedText.length === 1) {
       if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-      setRevealIndex({ field, index: selectionStart - 1 });
+      setRevealIndex({ field, index: prefixLen });
       revealTimerRef.current = setTimeout(() => {
         setRevealIndex(null);
       }, 800);
-    } else if (newValue.length < oldValue.length) {
-      // 文字が削除された場合
-      const diff = oldValue.length - newValue.length;
-      updatedValue = oldValue.slice(0, selectionStart) + oldValue.slice(selectionStart + diff);
-      setRevealIndex(null);
     } else {
-      // 長さが変わらない場合
-      updatedValue = newValue;
       setRevealIndex(null);
     }
 
@@ -107,6 +130,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
 
   /** 表示用のマスクされた値を生成 */
   const getDisplayValue = (field: keyof AppSettings, forceShow: boolean): string => {
+    const isSecretField = field === "apiKey" || field === "moocsPassword";
+    const isEdited = editedFields.has(field);
+    const hasValue = field === "apiKey" ? hasApiKey : hasMoocsPassword;
+
+    // 未編集かつ既存値がある場合は、ダミーのマスクを表示
+    if (isSecretField && !isEdited && hasValue) {
+      return "••••••••";
+    }
+
     const raw = settings[field];
     if (!raw) return "";
     if (forceShow) return raw;
@@ -128,7 +160,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
       try {
         if (window.electronAPI?.getSettings) {
           const loaded = await window.electronAPI.getSettings();
-          setSettings({ ...DEFAULT_SETTINGS, ...loaded });
+
+          // 秘密情報の存在確認（実値は保存に備えて消去する）
+          setHasApiKey(!!loaded.apiKey);
+          setHasMoocsPassword(!!loaded.moocsPassword);
+
+          const sanitized = {
+            ...loaded,
+            apiKey: "",
+            moocsPassword: "",
+          };
+
+          setSettings({ ...DEFAULT_SETTINGS, ...sanitized });
         }
       } catch {
         // モック動作
