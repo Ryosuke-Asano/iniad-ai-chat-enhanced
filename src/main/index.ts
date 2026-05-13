@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from "electron";
+import { registerIpcHandlers } from "./ipc-handlers";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -34,6 +35,7 @@ const createWindow = (): void => {
 };
 
 app.whenReady().then(() => {
+  registerIpcHandlers();
   createWindow();
 
   app.on("activate", () => {
