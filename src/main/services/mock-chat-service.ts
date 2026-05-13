@@ -42,7 +42,7 @@ const DEFAULT_RESPONSE =
   "申し訳ありませんが、その質問にはお答えできません。別の言い方で質問するか、INIAD MOOCsの講義資料を確認してください。";
 
 export class MockChatService {
-  private cancelled = false;
+  private abortController: AbortController | null = null;
   private store: InMemoryStore;
 
   constructor(store: InMemoryStore) {
@@ -50,7 +50,7 @@ export class MockChatService {
   }
 
   async sendChat(userText: string): Promise<ChatResponse> {
-    this.cancelled = false;
+    this.abortController = new AbortController();
     const startTime = Date.now();
 
     const userMessage: ChatTurn = {
@@ -62,11 +62,7 @@ export class MockChatService {
     this.store.addMessage(userMessage);
 
     const delay = 500 + Math.random() * 1000;
-    await this.delay(delay);
-
-    if (this.cancelled) {
-      throw new Error("CHAT_CANCELLED");
-    }
+    await this.delay(delay, this.abortController.signal);
 
     const mockResponse = this.findResponse(userText);
 
@@ -87,7 +83,7 @@ export class MockChatService {
   }
 
   cancelChat(): void {
-    this.cancelled = true;
+    this.abortController?.abort();
   }
 
   private findResponse(userText: string): { response: string; citations: Citation[] } {
@@ -100,8 +96,14 @@ export class MockChatService {
     return { response: DEFAULT_RESPONSE, citations: [] };
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  private delay(ms: number, signal: AbortSignal): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(resolve, ms);
+      signal.addEventListener("abort", () => {
+        clearTimeout(timeout);
+        reject(new Error("CHAT_CANCELLED"));
+      });
+    });
   }
 
   private generateId(): string {

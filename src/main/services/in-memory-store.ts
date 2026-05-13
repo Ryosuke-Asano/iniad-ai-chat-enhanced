@@ -8,6 +8,7 @@
 import type { ChatTurn, AppStatus, McpStatus } from "../../shared/types";
 
 export class InMemoryStore {
+  private static readonly MAX_HISTORY = 200;
   private chatHistory: ChatTurn[] = [];
   private mcpStatus: McpStatus = "disconnected";
   private currentModel: string = "gpt-5.4-nano";
@@ -15,6 +16,9 @@ export class InMemoryStore {
 
   addMessage(message: ChatTurn): void {
     this.chatHistory.push(message);
+    if (this.chatHistory.length > InMemoryStore.MAX_HISTORY) {
+      this.chatHistory.shift();
+    }
   }
 
   getHistory(): ChatTurn[] {
