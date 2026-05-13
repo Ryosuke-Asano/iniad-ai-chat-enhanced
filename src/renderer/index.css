@@ -8,6 +8,33 @@
   --user-bubble: #313244;
   --ai-bubble: #45475a;
   --border-color: #45475a;
+  --transition-speed: 0.3s;
+}
+
+/* ============================================
+   Custom Scrollbar (A10)
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 * {
@@ -138,6 +165,7 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 .message-sender-name {
@@ -166,6 +194,8 @@ body {
 .message-content {
   margin: 0;
   white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   color: var(--text-main);
 }
 
