@@ -15,8 +15,8 @@
    Custom Scrollbar (A10)
    ============================================ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -24,17 +24,16 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: content-box;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid transparent; /* ホバー時は少し太く見せる */
 }
 
 * {
