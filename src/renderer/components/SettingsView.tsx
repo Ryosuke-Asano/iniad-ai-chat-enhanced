@@ -29,12 +29,6 @@ const AVAILABLE_MODELS = [
   { value: "gpt-5.4", label: "GPT-5.4 (高性能)" },
 ];
 
-/** APIキー・パスワードをマスク表示する */
-function maskSecret(value: string): string {
-  if (!value || value.length <= 4) return "●●●●●●●●";
-  return "●".repeat(value.length - 4) + value.slice(-4);
-}
-
 /** URLバリデーション */
 function isValidURL(url: string): boolean {
   try {
@@ -70,49 +64,69 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     };
   }, []);
 
-  /** 秘密フィールドの表示値を生成（最後の1文字だけ一瞬見せる） */
-  const _getMaskedValue = (field: string, raw: string, forceShow: boolean): string => {
+  /**
+   * 秘密フィールドの入力を処理する
+   * 表示上の値（マスク文字を含む）から実際の値を復元する
+   */
+  const handleSecretChange = (field: keyof AppSettings, newValue: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const oldValue = settings[field];
+    const selectionStart = e.target.selectionStart || 0;
+
+    let updatedValue = oldValue;
+
+    // マスク文字（●）を実際の文字に置き換える前の、現在のカーソル位置の文字を特定
+    if (newValue.length > oldValue.length) {
+      // 文字が追加された場合
+      const addedChar = newValue.charAt(selectionStart - 1);
+      updatedValue = oldValue.slice(0, selectionStart - 1) + addedChar + oldValue.slice(selectionStart - 1);
+
+      // 最後に打った文字を一瞬見せる
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      setRevealIndex({ field, index: selectionStart - 1 });
+      revealTimerRef.current = setTimeout(() => {
+        setRevealIndex(null);
+      }, 800);
+    } else if (newValue.length < oldValue.length) {
+      // 文字が削除された場合
+      const diff = oldValue.length - newValue.length;
+      updatedValue = oldValue.slice(0, selectionStart) + oldValue.slice(selectionStart + diff);
+      setRevealIndex(null);
+    } else {
+      // 長さが変わらない場合
+      updatedValue = newValue;
+      setRevealIndex(null);
+    }
+
+    updateField(field, updatedValue);
+  };
+
+  /** 表示用のマスクされた値を生成 */
+  const getDisplayValue = (field: keyof AppSettings, forceShow: boolean): string => {
+    const raw = settings[field];
     if (!raw) return "";
     if (forceShow) return raw;
+
     return raw
       .split("")
       .map((ch, i) => {
         if (revealIndex && revealIndex.field === field && revealIndex.index === i) {
-          return ch; // 最後に打った文字を一瞬表示
+          return ch;
         }
         return "●";
       })
       .join("");
   };
 
-  /** 秘密フィールドの更新（最後の文字を一瞬見せてからマスク） */
-  const updateSecretField = (field: keyof AppSettings, newValue: string) => {
-    const oldValue = settings[field];
-    updateField(field, newValue);
-
-    // 文字が追加された場合のみ、最後の文字を一瞬見せる
-    if (newValue.length > oldValue.length) {
-      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-      setRevealIndex({ field, index: newValue.length - 1 });
-      revealTimerRef.current = setTimeout(() => {
-        setRevealIndex(null);
-      }, 600);
-    } else {
-      setRevealIndex(null);
-    }
-  };
-
   // ── 初期読み込み ──
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        // Main プロセスの IPC ハンドラが未登録の場合はスキップ
         if (window.electronAPI?.getSettings) {
           const loaded = await window.electronAPI.getSettings();
           setSettings({ ...DEFAULT_SETTINGS, ...loaded });
         }
       } catch {
-        // IPC ハンドラ未登録時のエラーは無視（モック動作）
+        // モック動作
       }
     };
     loadSettings();
@@ -123,26 +137,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     (current: AppSettings): ValidationErrors => {
       const errs: ValidationErrors = {};
 
-      // APIキー: 編集済みかつ空の場合のみエラー
       if (editedFields.has("apiKey") && !current.apiKey.trim()) {
         errs.apiKey = "APIキーは必須です";
       }
 
-      // ベースURL
       if (current.baseURL && !isValidURL(current.baseURL)) {
         errs.baseURL = "有効なURL形式で入力してください";
       }
 
-      // モデル
       if (!current.model.trim()) {
         errs.model = "モデルを選択してください";
       }
 
-      // MOOCsユーザー名・パスワードはペア入力
       const hasUsername = current.moocsUsername.trim().length > 0;
-      const hasPassword = editedFields.has("moocsPassword")
-        ? current.moocsPassword.trim().length > 0
-        : current.moocsPassword.length > 0; // マスク値でも存在判定
+      const hasPassword = current.moocsPassword.length > 0;
 
       if (hasUsername && !hasPassword) {
         errs.moocsPassword = "パスワードも入力してください";
@@ -163,7 +171,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     setEditedFields((prev) => new Set(prev).add(field));
     setSaveMessage(null);
 
-    // バリデーションを実行
     const newErrors = validate(newSettings);
     setErrors(newErrors);
   };
@@ -182,7 +189,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     setSaveMessage(null);
 
     try {
-      // 編集されたフィールドのみ送信
       const partial: Partial<AppSettings> = {};
       for (const field of editedFields) {
         partial[field] = settings[field];
@@ -194,8 +200,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
 
       setSaveMessage({ type: "success", text: "設定を保存しました" });
       setEditedFields(new Set());
-
-      // 3秒後にメッセージをクリア
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (e) {
       setSaveMessage({
@@ -218,7 +222,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
           message: result.success ? "接続成功" : result.error || "接続失敗",
         });
       } else {
-        // モック動作
         setApiTestResult({ status: "success", message: "接続成功（モック）" });
       }
     } catch (e) {
@@ -239,7 +242,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
           message: result.success ? "接続成功" : result.error || "接続失敗",
         });
       } else {
-        // モック動作
         setMcpTestResult({ status: "success", message: "接続成功（モック）" });
       }
     } catch (e) {
@@ -248,14 +250,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         message: e instanceof Error ? e.message : "テスト失敗",
       });
     }
-  };
-
-  // ── 表示ヘルパー ──
-  const _getSecretDisplayValue = (field: "apiKey" | "moocsPassword", showRaw: boolean): string => {
-    const value = settings[field];
-    if (!value) return "";
-    if (editedFields.has(field)) return value; // 編集中は常に平文
-    return showRaw ? value : maskSecret(value);
   };
 
   const renderTestButton = (label: string, result: TestResult, onTest: () => void) => (
@@ -321,7 +315,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   return (
     <div className="settings-view" id="settings-view">
       <div className="settings-content">
-        {/* ── API設定セクション ── */}
         <section className="settings-section" id="settings-api">
           <h3 className="settings-section-title">
             <span className="settings-section-icon">
@@ -348,10 +341,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-apiKey"
-                type={showApiKey ? "text" : "password"}
+                type="text"
                 className={`settings-input settings-secret-input ${errors.apiKey ? "error" : ""}`}
-                value={settings.apiKey}
-                onChange={(e) => updateSecretField("apiKey", e.target.value)}
+                value={getDisplayValue("apiKey", showApiKey)}
+                onChange={(e) => handleSecretChange("apiKey", e.target.value, e)}
                 placeholder="sk-..."
                 autoComplete="off"
               />
@@ -404,7 +397,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
           {renderTestButton("API接続テスト", apiTestResult, handleTestApi)}
         </section>
 
-        {/* ── モデル設定セクション ── */}
         <section className="settings-section" id="settings-model">
           <h3 className="settings-section-title">
             <span className="settings-section-icon">
@@ -446,7 +438,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
           </div>
         </section>
 
-        {/* ── MOOCs認証セクション ── */}
         <section className="settings-section" id="settings-moocs">
           <h3 className="settings-section-title">
             <span className="settings-section-icon">
@@ -493,10 +484,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             <div className="settings-input-group">
               <input
                 id="settings-moocsPassword"
-                type={showMoocsPassword ? "text" : "password"}
+                type="text"
                 className={`settings-input settings-secret-input ${errors.moocsPassword ? "error" : ""}`}
-                value={settings.moocsPassword}
-                onChange={(e) => updateSecretField("moocsPassword", e.target.value)}
+                value={getDisplayValue("moocsPassword", showMoocsPassword)}
+                onChange={(e) => handleSecretChange("moocsPassword", e.target.value, e)}
                 placeholder="パスワード"
                 autoComplete="off"
               />
@@ -534,41 +525,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
         </section>
       </div>
 
-      {/* ── フッター（保存・キャンセル） ── */}
       <div className="settings-footer">
         {saveMessage && (
           <span className={`settings-save-message ${saveMessage.type}`}>
-            {saveMessage.type === "success" ? (
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#a6e3a1"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ verticalAlign: "middle", marginRight: "4px" }}
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#f38ba8"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ verticalAlign: "middle", marginRight: "4px" }}
-              >
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            )}
             {saveMessage.text}
           </span>
         )}
