@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from "../shared/types";
 /**
  * 機密情報を部分的にマスクする
  */
-function maskSecret(val: any): string {
+function maskSecret(val: unknown): string {
   if (typeof val !== "string" || !val) return String(val);
   const len = val.length;
   if (len <= 4) return "****";

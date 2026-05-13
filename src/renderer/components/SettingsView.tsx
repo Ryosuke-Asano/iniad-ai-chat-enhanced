@@ -75,7 +75,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
   const handleSecretChange = (
     field: keyof AppSettings,
     newValue: string,
-    e: React.ChangeEvent<HTMLInputElement>
+    _e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const oldValue = settings[field];
     const isMasked = field === "apiKey" ? !showApiKey : !showMoocsPassword;
