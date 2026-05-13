@@ -86,6 +86,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
       return;
     }
 
+    const isSecretField = field === "apiKey" || field === "moocsPassword";
+    const isEdited = editedFields.has(field);
+    const hasValue = field === "apiKey" ? hasApiKey : hasMoocsPassword;
+    const isInitialEdit = isSecretField && !isEdited && hasValue;
+
     const maskedOldValue = getDisplayValue(field, false);
 
     // 前方一致の長さを求める
@@ -109,20 +114,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
       suffixLen++;
     }
 
-    // 変更部分を抽出して実際の値を再構成
+    // 変更部分を抽出
     const addedText = newValue.slice(prefixLen, newValue.length - suffixLen);
-    const updatedValue =
-      oldValue.slice(0, prefixLen) + addedText + oldValue.slice(oldValue.length - suffixLen);
 
-    // 1文字追加または置換された場合のみ、一瞬だけ表示する（ピーキング）
-    if (addedText.length === 1) {
-      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-      setRevealIndex({ field, index: prefixLen });
-      revealTimerRef.current = setTimeout(() => {
-        setRevealIndex(null);
-      }, 800);
+    let updatedValue: string;
+    if (isInitialEdit) {
+      // 既存値がある状態での初回編集：プレースホルダーとの差分を新しい値とする（パッチングをスキップ）
+      updatedValue = addedText;
+      setRevealIndex(null); // 初回入力時はピーキングを無効化
     } else {
-      setRevealIndex(null);
+      // 通常の編集：実際の oldValue に対してパッチを当てる
+      updatedValue =
+        oldValue.slice(0, prefixLen) + addedText + oldValue.slice(oldValue.length - suffixLen);
+
+      // 1文字追加または置換された場合のみ、一瞬だけ表示する（ピーキング）
+      if (addedText.length === 1) {
+        if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+        setRevealIndex({ field, index: prefixLen });
+        revealTimerRef.current = setTimeout(() => {
+          setRevealIndex(null);
+        }, 800);
+      } else {
+        setRevealIndex(null);
+      }
     }
 
     updateField(field, updatedValue);
