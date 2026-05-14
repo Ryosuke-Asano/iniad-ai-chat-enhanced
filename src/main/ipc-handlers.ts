@@ -1,57 +1,78 @@
 import { ipcMain } from "electron";
-import { DEFAULT_SETTINGS } from "../shared/types";
+import { settingsStore } from "./services/settings-store";
+import { McpClient } from "./services/mcp-client";
 
-/**
- * 機密情報を部分的にマスクする
- */
-function maskSecret(val: unknown): string {
-  if (typeof val !== "string" || !val) return String(val);
-  const len = val.length;
-  if (len <= 4) return "****";
-  // 最低でも3分の1以上を隠し、前後最大4文字を表示する
-  const show = Math.min(4, Math.floor(len / 3));
-  if (show === 0) return "****";
-  return `${val.slice(0, show)}....${val.slice(-show)}`;
-}
+// MCP クライアントのインスタンス化
+const mcpClient = new McpClient();
 
 export function registerIpcHandlers() {
   // ── 設定 ──
   ipcMain.handle("settings:get", async () => {
-    console.log("[Mock IPC] settings:get called");
-    return DEFAULT_SETTINGS;
+    return settingsStore.getSettings();
   });
 
   ipcMain.handle("settings:set", async (_event, settings) => {
-    const sanitized = { ...settings };
-    if ("apiKey" in sanitized) sanitized.apiKey = maskSecret(sanitized.apiKey);
-    if ("moocsPassword" in sanitized) sanitized.moocsPassword = maskSecret(sanitized.moocsPassword);
-
-    console.log("[Mock IPC] settings:set called", sanitized);
+    await settingsStore.updateSettings(settings);
     return { success: true };
   });
 
   ipcMain.handle("settings:test-api", async () => {
-    console.log("[Mock IPC] settings:test-api called");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return { success: true };
+    const { apiKey, baseURL } = settingsStore.getRawSettings();
+    if (!apiKey) return { success: false, error: "APIキーが設定されていません" };
+
+    try {
+      // 実際のエンドポイントに疎通確認
+      const response = await fetch(`${baseURL}/models`, {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+
+      if (response.ok) {
+        return { success: true };
+      } else {
+        const data = (await response.json()) as any;
+        return {
+          success: false,
+          error: data?.error?.message || `エラー: ${response.status}`,
+        };
+      }
+    } catch (e) {
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : "接続に失敗しました",
+      };
+    }
   });
 
   ipcMain.handle("settings:test-mcp", async () => {
-    console.log("[Mock IPC] settings:test-mcp called");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return { success: true };
+    const { moocsUsername, moocsPassword } = settingsStore.getRawSettings();
+    if (!moocsUsername || !moocsPassword) {
+      return { success: false, error: "MOOCs認証情報が設定されていません" };
+    }
+
+    try {
+      await mcpClient.connect(moocsUsername, moocsPassword);
+      await mcpClient.disconnect();
+      return { success: true };
+    } catch (e) {
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : "MCP接続テストに失敗しました",
+      };
+    }
   });
 
-  // ── チャット ──
+  // ── チャット（※現在はまだモックのまま） ──
   ipcMain.handle("chat:send", async (_event, text) => {
-    console.log("[Mock IPC] chat:send called", text);
+    console.log("[IPC] chat:send (Mock)", text);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     return {
       id: Date.now().toString(),
       role: "assistant",
-      content: `これはモックの応答です。あなたが入力したメッセージ: "${text}"`,
+      content: `これはモックの応答です。あなたが入力したメッセージ: "${text}"\n\n(※現在、チャットエンジンとの統合は準備中です。)`,
       timestamp: new Date().toISOString(),
-      model: "gpt-5.4-mini",
+      model: settingsStore.getSettings().model,
     };
   });
 
@@ -70,9 +91,9 @@ export function registerIpcHandlers() {
   // ── ステータス ──
   ipcMain.handle("app:status", async () => {
     return {
-      mcpStatus: "connected",
-      model: "gpt-5.4-mini",
-      hasApiKey: true,
+      mcpStatus: mcpClient.getStatus(),
+      model: settingsStore.getSettings().model,
+      hasApiKey: settingsStore.hasApiKey(),
     };
   });
 }
